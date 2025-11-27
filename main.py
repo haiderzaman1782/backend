@@ -33,7 +33,10 @@ app.add_middleware(
 
 # Include routers from backend
 from backend.books import router as books_router
+from backend.admin import router as admin_router
+
 app.include_router(books_router)
+app.include_router(admin_router)
 
 # =====================================================
 #  Helper: get similar books

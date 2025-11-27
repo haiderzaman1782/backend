@@ -26,7 +26,7 @@ def _connect():
 def fetch_books():
     conn = _connect()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
-    cursor.execute("SELECT * FROM books LIMIT 1000")
+    cursor.execute("SELECT * FROM books")
     rows = cursor.fetchall()
     # rows are RealDictRow; convert to plain dicts
     result = [dict(r) for r in rows]
