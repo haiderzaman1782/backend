@@ -65,7 +65,7 @@ def _set_cache(key: str, value: Any, ttl: int) -> bool:
         return False
     
     try:
-        serialized = json.dumps(value, cls=DecimalEncoder)
+        serialized = json.dumps(value)
         redis_client.client.setex(key, ttl, serialized)
         logger.debug(f"💾 Cache SET: {key} (TTL: {ttl}s)")
         return True
@@ -291,3 +291,4 @@ def get_all_cache_keys() -> list:
     except Exception as e:
         logger.error(f"Error getting cache keys: {e}")
         return []
+
