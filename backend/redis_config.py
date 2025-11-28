@@ -31,21 +31,31 @@ class RedisClient:
     def _create_connection(self) -> redis.Redis:
         """
         Create Redis connection from environment configuration.
+        Supports both local Redis and cloud providers (Upstash, Redis Cloud, etc.)
         
         Returns:
             redis.Redis: Configured Redis client instance
         """
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         
-        return redis.from_url(
-            redis_url,
-            decode_responses=True,  # Automatically decode responses to strings
-            socket_connect_timeout=5,  # Connection timeout in seconds
-            socket_keepalive=True,  # Keep connection alive
-            health_check_interval=30,  # Health check every 30 seconds
-            retry_on_timeout=True,  # Retry on timeout
-            max_connections=50  # Connection pool size
-        )
+        # Check if SSL/TLS is required (for cloud providers like Upstash)
+        # Upstash and other cloud providers use rediss:// or require SSL
+        connection_kwargs = {
+            "decode_responses": True,  # Automatically decode responses to strings
+            "socket_connect_timeout": 5,  # Connection timeout in seconds
+            "socket_keepalive": True,  # Keep connection alive
+            "health_check_interval": 30,  # Health check every 30 seconds
+            "retry_on_timeout": True,  # Retry on timeout
+            "max_connections": 50  # Connection pool size
+        }
+        
+        # For cloud providers (Upstash, Redis Cloud), enable SSL
+        # Upstash URLs contain "upstash.io" or use rediss:// protocol
+        if "upstash.io" in redis_url or redis_url.startswith("rediss://"):
+            connection_kwargs["ssl_cert_reqs"] = None  # Don't verify SSL certificates
+            logger.info("🔒 Using SSL/TLS connection for cloud Redis")
+        
+        return redis.from_url(redis_url, **connection_kwargs)
     
     @property
     def client(self) -> Optional[redis.Redis]:
