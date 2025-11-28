@@ -1,9 +1,18 @@
 import json
 import logging
 from typing import Any, Optional
+from decimal import Decimal
 from backend.redis_config import redis_client
 
 logger = logging.getLogger(__name__)
+
+
+class DecimalEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles Decimal types from PostgreSQL."""
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
 
 # Cache TTL settings (in seconds)
 CACHE_TTL_RECOMMENDATIONS = 3600  # 1 hour
@@ -64,7 +73,7 @@ def _set_cache(key: str, value: Any, ttl: int) -> bool:
         return False
     
     try:
-        serialized = json.dumps(value)
+        serialized = json.dumps(value, cls=DecimalEncoder)
         redis_client.client.setex(key, ttl, serialized)
         logger.debug(f"💾 Cache SET: {key} (TTL: {ttl}s)")
         return True
