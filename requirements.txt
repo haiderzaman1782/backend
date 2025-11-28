@@ -7,3 +7,5 @@ numpy
 scikit-learn
 joblib
 psycopg2-binary
+redis>=5.0.0
+hiredis>=2.2.0
