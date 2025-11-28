@@ -38,24 +38,21 @@ class RedisClient:
         """
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         
-        # Check if SSL/TLS is required (for cloud providers like Upstash)
-        # Upstash and other cloud providers use rediss:// or require SSL
-        connection_kwargs = {
-            "decode_responses": True,  # Automatically decode responses to strings
-            "socket_connect_timeout": 5,  # Connection timeout in seconds
-            "socket_keepalive": True,  # Keep connection alive
-            "health_check_interval": 30,  # Health check every 30 seconds
-            "retry_on_timeout": True,  # Retry on timeout
-            "max_connections": 50  # Connection pool size
-        }
+        # For Upstash, we need to use rediss:// (SSL) protocol
+        # Replace redis:// with rediss:// for Upstash
+        if "upstash.io" in redis_url and redis_url.startswith("redis://"):
+            redis_url = redis_url.replace("redis://", "rediss://", 1)
+            logger.info("🔒 Using SSL/TLS connection for Upstash Redis")
         
-        # For cloud providers (Upstash, Redis Cloud), enable SSL
-        # Upstash URLs contain "upstash.io" or use rediss:// protocol
-        if "upstash.io" in redis_url or redis_url.startswith("rediss://"):
-            connection_kwargs["ssl_cert_reqs"] = None  # Don't verify SSL certificates
-            logger.info("🔒 Using SSL/TLS connection for cloud Redis")
-        
-        return redis.from_url(redis_url, **connection_kwargs)
+        return redis.from_url(
+            redis_url,
+            decode_responses=True,  # Automatically decode responses to strings
+            socket_connect_timeout=5,  # Connection timeout in seconds
+            socket_keepalive=True,  # Keep connection alive
+            health_check_interval=30,  # Health check every 30 seconds
+            retry_on_timeout=True,  # Retry on timeout
+            max_connections=50  # Connection pool size
+        )
     
     @property
     def client(self) -> Optional[redis.Redis]:
