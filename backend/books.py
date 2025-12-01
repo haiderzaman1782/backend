@@ -50,16 +50,26 @@ def fetch_books():
     cursor.execute("""
         SELECT 
             id,
-            book_id,
-            original_title,
             title,
             authors,
             original_publication_year,
             average_rating,
-            image_url,
-            small_image_url
+            image_url
         FROM books
     """)
+    
+    rows = cursor.fetchall()
+    result = [dict(r) for r in rows]
+
+    cursor.close()
+    conn.close()
+
+    # Cache for 5 mins
+    set_cached_books(result)
+
+    return result
+
+
 # ---------------------------------------------------------
 # POST /books  → insert book into DB + CSV
 # ---------------------------------------------------------
@@ -80,14 +90,12 @@ def add_book(book: dict):
         writer = csv.writer(f)
         if not file_exists:
             writer.writerow([
-                "book_id", "title", "original_title", "authors", "original_publication_year",
+                "title", "authors", "original_publication_year",
                 "average_rating", "image_url"
             ])
 
         writer.writerow([
-            book["book_id"],
             book["title"],
-            book["original_title"],
             book["authors"],
             book["original_publication_year"],
             book["average_rating"],
