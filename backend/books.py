@@ -75,69 +75,23 @@ def fetch_books():
 # ---------------------------------------------------------
 @router.post("/books")
 def add_book(book: dict):
-    required_fields = [
-        "title",
-        "authors",
-        "original_publication_year",
-        "average_rating",
-        "image_url"
-    ]
 
-    # Validate required fields
-    for field in required_fields:
-        if field not in book:
-            raise HTTPException(status_code=400, detail=f"Missing field: {field}")
+    # validate fields
+    ...
 
-    conn = _connect()
-    cursor = conn.cursor()
+    # DO NOT INSERT INTO DB HERE
+    # Supabase already did that
 
-    try:
-        cursor.execute("""
-            INSERT INTO books (
-                title,
-                authors,
-                original_publication_year,
-                average_rating,
-                image_url
-            ) VALUES (%s, %s, %s, %s, %s)
-            RETURNING id;
-        """, (
-            book["title"],
-            book["authors"],
-            book["original_publication_year"],
-            book["average_rating"],
-            book["image_url"]
-        ))
-
-        new_id = cursor.fetchone()[0]
-        conn.commit()
-
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-
-    finally:
-        cursor.close()
-        conn.close()
-
-    # Invalidate Redis cache
-    invalidate_books_list()
-
-    # Append to CSV for your ML model
+    # Only update CSV
     csv_file = "books.csv"
     file_exists = os.path.isfile(csv_file)
 
     with open(csv_file, "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-
-        # Write header if file didn't exist
         if not file_exists:
             writer.writerow([
-                "title",
-                "authors",
-                "original_publication_year",
-                "average_rating",
-                "image_url"
+                "title", "authors", "original_publication_year",
+                "average_rating", "image_url"
             ])
 
         writer.writerow([
@@ -148,7 +102,5 @@ def add_book(book: dict):
             book["image_url"]
         ])
 
-    return {
-        "message": "Book added successfully",
-        "book_id": new_id
-    }
+    return {"message": "Book processed for ML CSV"}
+
