@@ -50,26 +50,16 @@ def fetch_books():
     cursor.execute("""
         SELECT 
             id,
+            book_id,
+            original_title,
             title,
             authors,
             original_publication_year,
             average_rating,
-            image_url
+            image_url,
+            small_image_url
         FROM books
     """)
-    
-    rows = cursor.fetchall()
-    result = [dict(r) for r in rows]
-
-    cursor.close()
-    conn.close()
-
-    # Cache for 5 mins
-    set_cached_books(result)
-
-    return result
-
-
 # ---------------------------------------------------------
 # POST /books  → insert book into DB + CSV
 # ---------------------------------------------------------
@@ -83,19 +73,21 @@ def add_book(book: dict):
     # Supabase already did that
 
     # Only update CSV
-    csv_file = "books.csv"
+    csv_file = "../books.csv"
     file_exists = os.path.isfile(csv_file)
 
     with open(csv_file, "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         if not file_exists:
             writer.writerow([
-                "title", "authors", "original_publication_year",
+                "book_id", "title", "original_title", "authors", "original_publication_year",
                 "average_rating", "image_url"
             ])
 
         writer.writerow([
+            book["book_id"],
             book["title"],
+            book["original_title"],
             book["authors"],
             book["original_publication_year"],
             book["average_rating"],
