@@ -51,7 +51,7 @@ def fetch_books():
         SELECT 
             id,
             title,
-            author,
+            authors,
             original_publication_year,
             average_rating,
             image_url
@@ -77,7 +77,7 @@ def fetch_books():
 def add_book(book: dict):
     required_fields = [
         "title",
-        "author",
+        "authors",
         "original_publication_year",
         "average_rating",
         "image_url"
@@ -95,7 +95,7 @@ def add_book(book: dict):
         cursor.execute("""
             INSERT INTO books (
                 title,
-                author,
+                authors,
                 original_publication_year,
                 average_rating,
                 image_url
@@ -103,7 +103,7 @@ def add_book(book: dict):
             RETURNING id;
         """, (
             book["title"],
-            book["author"],
+            book["authors"],
             book["original_publication_year"],
             book["average_rating"],
             book["image_url"]
@@ -124,7 +124,7 @@ def add_book(book: dict):
     invalidate_books_list()
 
     # Append to CSV for your ML model
-    csv_file = "books_dataset.csv"
+    csv_file = "books.csv"
     file_exists = os.path.isfile(csv_file)
 
     with open(csv_file, "a", newline="", encoding="utf-8") as f:
@@ -134,7 +134,7 @@ def add_book(book: dict):
         if not file_exists:
             writer.writerow([
                 "title",
-                "author",
+                "authors",
                 "original_publication_year",
                 "average_rating",
                 "image_url"
@@ -142,7 +142,7 @@ def add_book(book: dict):
 
         writer.writerow([
             book["title"],
-            book["author"],
+            book["authors"],
             book["original_publication_year"],
             book["average_rating"],
             book["image_url"]
